@@ -51,7 +51,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, LSTM
 
 company = "FB"
-training_years_back = 2
+training_years_back = 5
 prediction_days = 7
 
 class shape_table:
@@ -192,8 +192,9 @@ plt.ylabel(f"{company} Share Price")
 plt.legend()
 plt.show()
 
-'''
-#Predict Next Day
+
+######################################################
+#Predict Next Day Price
 real_data = [actual_prices_scaled[len(actual_prices_scaled) - prediction_days:, 0]]
 real_data = np.array(real_data)
 real_data_reshaped = np.reshape(real_data, (real_data.shape[0], real_data.shape[1], 1))
@@ -201,7 +202,6 @@ real_data_reshaped = np.reshape(real_data, (real_data.shape[0], real_data.shape[
 prediction_scaled = model.predict(real_data_reshaped)
 prediction = scaler.inverse_transform(prediction_scaled)
 print(f"Prediction: {prediction}")
-'''
 
 print("end")
 
