@@ -118,7 +118,7 @@ training_data_set_len = prediction_days
 training_samples_num = len(historical_stock_prices_scaled)-prediction_days-1
 for i in range(0, training_samples_num):
     training__input_prices.append(historical_stock_prices_scaled[i:i+training_data_set_len, 0])
-    training__next_day_price.append(historical_stock_prices_scaled[i+prediction_days, 0])
+    training__next_day_price.append(historical_stock_prices_scaled[i+training_data_set_len, 0])
 
 #convert into numpy arrays
 training__input_prices = np.array(training__input_prices)
@@ -175,8 +175,8 @@ test__actual_prices = []
 test_data_set_len = prediction_days
 test_samples_num = len(actual_prices_scaled)-prediction_days-1
 for i in range(0, test_samples_num):
-    test__input_prices_scaled.append(actual_prices_scaled[i:i+training_data_set_len, 0])
-    test__actual_prices.append(actual_prices[i + prediction_days])
+    test__input_prices_scaled.append(actual_prices_scaled[i:i+test_data_set_len, 0])
+    test__actual_prices.append(actual_prices[i + test_data_set_len])
 
 test__input_prices_scaled = np.array(test__input_prices_scaled)
 test__input_prices_scaled = np.reshape(test__input_prices_scaled,
