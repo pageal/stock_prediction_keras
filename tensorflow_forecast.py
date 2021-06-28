@@ -50,7 +50,7 @@ from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, LSTM
 
-company = "FB"
+company = "INTC"
 training_years_back = 5
 prediction_days = 7
 
