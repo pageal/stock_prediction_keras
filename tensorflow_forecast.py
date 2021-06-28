@@ -138,12 +138,13 @@ model = Sequential()
 
 # LTSM neural network- https://en.wikipedia.org/wiki/Long_short-term_memory
 #model.add(LSTM(units=60,return_sequences=True, input_shape=(training__input_prices.shape[shape_table.SHAPE_COLUMNS], 1)))
-model.add(LSTM(units=prediction_days,return_sequences=True, input_shape=(training__input_prices.shape[shape_table.SHAPE_COLUMNS], 1)))
+#model.add(LSTM(units=prediction_days,return_sequences=True, input_shape=(training__input_prices.shape[shape_table.SHAPE_COLUMNS], 1)))
+model.add(LSTM(units=prediction_days, input_shape=(training__input_prices.shape[shape_table.SHAPE_COLUMNS], 1)))
 model.add(Dropout(0.2))
-model.add(LSTM(units=prediction_days-1,return_sequences=True))
-model.add(Dropout(0.2))
-model.add(LSTM(units=prediction_days-2))
-model.add(Dropout(0.2))
+#model.add(LSTM(units=prediction_days-1,return_sequences=True))
+#model.add(Dropout(0.2))
+#model.add(LSTM(units=prediction_days))
+#model.add(Dropout(0.2))
 #model.add(LSTM(units=58,return_sequences=True))
 #model.add(Dropout(0.2))
 #model.add(LSTM(units=67))
@@ -160,7 +161,7 @@ model.fit(training__input_prices, training__next_day_price, epochs=5, shuffle=Tr
 #Prepare test data
 #test_start = dt.datetime(the_year-1,1,1)
 test_end = dt.datetime.now()
-test_span = dt.timedelta(days=90)
+test_span = dt.timedelta(days=150)
 test_start = test_end - test_span
 
 test_data = web.DataReader(company, "yahoo", test_start, test_end)
@@ -188,13 +189,33 @@ predicted_prices_scaled = model.predict(test__input_prices_scaled)
 predicted_prices = scaler.inverse_transform(predicted_prices_scaled)
 
 # Plot the test predictions
-plt.plot(test__actual_prices, color="black", label=f"Actual {company} price")
-plt.plot(predicted_prices, color='green', label=f"Predicted {company} price")
+#linestyle: '-', '--', '-.', ':', 'None', ' ', '', 'solid', 'dashed', 'dashdot', 'dotted'
+#plt.plot(test__actual_prices, color="black", linestyle='solid', solid_joinstyle='round', label=f"Actual {company} price")
+#plt.plot(predicted_prices, color='green', linestyle='solid', label=f"Predicted {company} price")
+#plt.title(f"{company} Share Price")
+#plt.xlabel('Time')
+#plt.ylabel(f"{company} Share Price")
+#plt.legend()
+#plt.show()
+
+index_arr = []
+for i in range(0,len(test__actual_prices)):
+    index_arr.append(i)
+index_arr = np.array(index_arr)
+
+#plt.vlines(x=index_arr, ymin=0, ymax=test__actual_prices, color='firebrick', alpha=0.7, linewidth=2)
+plt.grid(which="both", axis="x")
+plt.scatter(x=index_arr, y=test__actual_prices, s=15, color='firebrick', alpha=0.7)
+plt.plot(test__actual_prices, color="black", linestyle='solid', solid_joinstyle='round', label=f"Actual {company} price")
+plt.scatter(x=index_arr, y=predicted_prices, s=10, color='green', alpha=0.7)
+plt.vlines(x=index_arr, ymin=100, ymax=150, color='gray', alpha=0.7, linewidth=1, linestyles='dashed')
+
 plt.title(f"{company} Share Price")
 plt.xlabel('Time')
 plt.ylabel(f"{company} Share Price")
 plt.legend()
 plt.show()
+
 
 
 ######################################################
