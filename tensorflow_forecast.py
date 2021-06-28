@@ -3,7 +3,7 @@
 # https://www.youtube.com/watch?v=PuZY9q-aKLw
 # NeuralLine Youtube channel: https://www.youtube.com/channel/UC8wZnXYK_CGKlBcZp-GxYPA
 #
-# pageal's comments and possible changes are based:
+# pageal's comments and possible changes are based on:
 # 1) Stanford University. Machine Learning course (https://www.coursera.org/learn/machine-learning/home/welcome)
 ######################################
 
@@ -150,8 +150,7 @@ model.add(Dense(units=1))  # Prediction of the next closing value
 
 model.compile(optimizer='adam', loss='mean_squared_error')
 #perform actual training
-#model.fit(training__input_prices, training__next_day_price, epochs=5, shuffle=True, batch_size=prediction_days)
-model.fit(training__input_prices, training__next_day_price, epochs=5, batch_size=prediction_days)
+model.fit(training__input_prices, training__next_day_price, epochs=5, shuffle=True, batch_size=prediction_days)
 
 
 ######################################################
