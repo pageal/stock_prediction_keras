@@ -50,8 +50,8 @@ from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, LSTM
 
-company = "INTC"
-training_years_back = 5
+company = "AAPL"
+training_years_back = 10
 prediction_days = 7
 
 class shape_table:
@@ -59,8 +59,10 @@ class shape_table:
     SHAPE_COLUMNS = 1
 
 the_year = dt.datetime.now().year
-start = dt.datetime(the_year - training_years_back - 1,1,1)
-end = dt.datetime(the_year - 1,1,1)
+#start = dt.datetime(the_year - training_years_back - 1,1,1)
+end = dt.datetime.now()
+training_span = dt.timedelta(days=365*training_years_back)
+start = end - training_span
 
 
 ######################################
@@ -116,7 +118,7 @@ training_data_set_len = prediction_days
 training_samples_num = len(historical_stock_prices_scaled)-prediction_days-1
 for i in range(0, training_samples_num):
     training__input_prices.append(historical_stock_prices_scaled[i:i+training_data_set_len, 0])
-    training__next_day_price.append(historical_stock_prices_scaled[i+training_data_set_len, 0])
+    training__next_day_price.append(historical_stock_prices_scaled[i+prediction_days, 0])
 
 #convert into numpy arrays
 training__input_prices = np.array(training__input_prices)
@@ -136,11 +138,11 @@ model = Sequential()
 
 # LTSM neural network- https://en.wikipedia.org/wiki/Long_short-term_memory
 #model.add(LSTM(units=60,return_sequences=True, input_shape=(training__input_prices.shape[shape_table.SHAPE_COLUMNS], 1)))
-model.add(LSTM(units=7,return_sequences=True, input_shape=(training__input_prices.shape[shape_table.SHAPE_COLUMNS], 1)))
+model.add(LSTM(units=prediction_days,return_sequences=True, input_shape=(training__input_prices.shape[shape_table.SHAPE_COLUMNS], 1)))
 model.add(Dropout(0.2))
-model.add(LSTM(units=7,return_sequences=True))
+model.add(LSTM(units=prediction_days-1,return_sequences=True))
 model.add(Dropout(0.2))
-model.add(LSTM(units=7))
+model.add(LSTM(units=prediction_days-2))
 model.add(Dropout(0.2))
 #model.add(LSTM(units=58,return_sequences=True))
 #model.add(Dropout(0.2))
@@ -156,9 +158,10 @@ model.fit(training__input_prices, training__next_day_price, epochs=5, shuffle=Tr
 ######################################################
 # Model accuracy TEST on existing data
 #Prepare test data
-test_start = dt.datetime(the_year-1,1,1)
+#test_start = dt.datetime(the_year-1,1,1)
 test_end = dt.datetime.now()
-test_days = 30
+test_span = dt.timedelta(days=90)
+test_start = test_end - test_span
 
 test_data = web.DataReader(company, "yahoo", test_start, test_end)
 actual_prices = test_data['High'].values
@@ -167,23 +170,25 @@ actual_prices_scaled = scaler.fit_transform(actual_prices_reshaped)
 
 
 # Make predictions on Test data
-test__input_prices = []
-training_data_set_len = prediction_days
-training_samples_num = len(actual_prices)-prediction_days-1
-for i in range(0, training_samples_num):
-    test__input_prices.append(actual_prices_scaled[i:i+training_data_set_len, 0])
+test__input_prices_scaled = []
+test__actual_prices = []
+test_data_set_len = prediction_days
+test_samples_num = len(actual_prices_scaled)-prediction_days-1
+for i in range(0, test_samples_num):
+    test__input_prices_scaled.append(actual_prices_scaled[i:i+training_data_set_len, 0])
+    test__actual_prices.append(actual_prices[i + prediction_days])
 
-test__input_prices = np.array(test__input_prices)
-test__input_prices = np.reshape(test__input_prices,
-                                (test__input_prices.shape[shape_table.SHAPE_ROWS],
-                                 test__input_prices.shape[shape_table.SHAPE_COLUMNS],
+test__input_prices_scaled = np.array(test__input_prices_scaled)
+test__input_prices_scaled = np.reshape(test__input_prices_scaled,
+                                (test__input_prices_scaled.shape[shape_table.SHAPE_ROWS],
+                                 test__input_prices_scaled.shape[shape_table.SHAPE_COLUMNS],
                                  1))
 
-predicted_prices = model.predict(test__input_prices)
-predicted_prices = scaler.inverse_transform(predicted_prices)
+predicted_prices_scaled = model.predict(test__input_prices_scaled)
+predicted_prices = scaler.inverse_transform(predicted_prices_scaled)
 
 # Plot the test predictions
-plt.plot(actual_prices, color="black", label=f"Actual {company} price")
+plt.plot(test__actual_prices, color="black", label=f"Actual {company} price")
 plt.plot(predicted_prices, color='green', label=f"Predicted {company} price")
 plt.title(f"{company} Share Price")
 plt.xlabel('Time')
@@ -196,7 +201,7 @@ plt.show()
 #Predict Next Day Price
 real_data = [actual_prices_scaled[len(actual_prices_scaled) - prediction_days:, 0]]
 real_data = np.array(real_data)
-real_data_reshaped = np.reshape(real_data, (real_data.shape[0], real_data.shape[1], 1))
+real_data_reshaped = np.reshape(real_data, (real_data.shape[shape_table.SHAPE_ROWS], real_data.shape[shape_table.SHAPE_COLUMNS], 1))
 
 prediction_scaled = model.predict(real_data_reshaped)
 prediction = scaler.inverse_transform(prediction_scaled)
