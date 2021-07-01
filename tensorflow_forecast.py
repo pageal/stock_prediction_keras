@@ -230,11 +230,10 @@ if(history != None):
     #Plotting the model loss
     #https://towardsdatascience.com/walking-through-support-vector-regression-and-lstms-with-stock-price-prediction-45e11b620650
     plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
     plt.title('Model loss')
     plt.ylabel('Loss')
     plt.xlabel('Epoch')
-    plt.legend(['Train', 'Test'], loc='upper left')
+    plt.legend(['Train'])
     plt.show()
 
 ######################################################
