@@ -55,7 +55,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, LSTM
 from tensorflow.keras.models import load_model
 
-company = "AAPL"
+company = "INTC"
 training_years_back = 20
 prediction_days = 10
 training_epochs = 100
@@ -141,33 +141,38 @@ training__input_prices = np.reshape(training__input_prices,
 ###########################################
 #Build the neural model
 history = None
-'''
-model = Sequential()
+model = None
 
-# LTSM neural network- https://en.wikipedia.org/wiki/Long_short-term_memory
-model.add(LSTM(units=prediction_days*2, return_sequences=True, input_shape=(training__input_prices.shape[shape_table.SHAPE_COLUMNS], 1)))
+#True - for loading the model
+#False - for training
+if(False):
+    model = Sequential()
 
-#version 1
-model.add(tf.keras.layers.LSTM(units=prediction_days*2))
-model.add(tf.keras.layers.Dense(units=1, activation=tf.nn.relu))
+    # LTSM neural network- https://en.wikipedia.org/wiki/Long_short-term_memory
+    model.add(LSTM(units=prediction_days*2, return_sequences=True, input_shape=(training__input_prices.shape[shape_table.SHAPE_COLUMNS], 1)))
 
-#version 2
-#model.add(Dropout(0.2))
-#model.add(LSTM(units=prediction_days, return_sequences=True))
-#model.add(Dropout(0.2))
-#model.add(LSTM(units=prediction_days, return_sequences=True))
-#model.add(Dropout(0.2))
-#model.add(LSTM(units=prediction_days))
-#model.add(Dropout(0.2))
-#model.add(Dense(units=1))
+    #version 1
+    model.add(tf.keras.layers.LSTM(units=prediction_days*2))
+    model.add(tf.keras.layers.Dense(units=1, activation=tf.nn.relu))
 
-model.compile(optimizer='adam', loss='mean_squared_error')
+    #version 2
+    #model.add(Dropout(0.2))
+    #model.add(LSTM(units=prediction_days, return_sequences=True))
+    #model.add(Dropout(0.2))
+    #model.add(LSTM(units=prediction_days, return_sequences=True))
+    #model.add(Dropout(0.2))
+    #model.add(LSTM(units=prediction_days))
+    #model.add(Dropout(0.2))
+    #model.add(Dense(units=1))
 
-#perform actual training
-history = model.fit(training__input_prices, training__next_day_price, epochs=training_epochs, shuffle=True, batch_size=prediction_days)
-model.save("{}_ltsm_model_{}".format(company, dt.datetime.now().strftime("%m_%d_%Y__%H_%M_%S")))
-'''
-model = load_model("C:\MyProjects\AI\stock_prediction_ve\AAPL_ltsm_model_07_01_2021__12_29_30_good")
+    model.compile(optimizer='adam', loss='mean_squared_error')
+
+    #perform actual training
+    history = model.fit(training__input_prices, training__next_day_price, epochs=training_epochs, shuffle=True, batch_size=prediction_days)
+    model.save("{}_ltsm_model_{}".format(company, dt.datetime.now().strftime("%m_%d_%Y__%H_%M_%S")))
+else:
+    # UNCOMMENT TO LOAD MODEL
+    model = load_model("C:\MyProjects\AI\stock_prediction_ve\AAPL_ltsm_model_07_01_2021__12_29_30_good")
 
 ######################################################
 # Model accuracy TEST on existing data
