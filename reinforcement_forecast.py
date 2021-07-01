@@ -61,19 +61,17 @@ def formatPrice(n):
     return("-Rs." if n<0 else "Rs.")+"{0:.2f}".format(abs(n))
 
 class ReinforcentModel():
-    def __init__(self, stock_ticker, state_size):
+    def __init__(self, stock_ticker, state_size=7, num_of_training_days=100, num_of_training_episodes=5):
         self.model_name = "{}_model_{}".format(stock_ticker, dt.datetime.now().strftime("%m_%d_%Y__%H_%M_%S"))
         self.stock_ticker = stock_ticker
         self.state_size = state_size  # training set size
 
-        self.batch_size = 32
-        self.episode_count = 5
-        self.training_years_back = 1
+        self.num_of_training_days = num_of_training_days
+        self.num_of_training_episodes = num_of_training_episodes
+        self.batch_size = int(num_of_training_days/3)
         the_year = dt.datetime.now().year
         self.training_end_date = dt.datetime(the_year, 1, 1)
-        # end = dt.datetime.now()
-        #training_span = dt.timedelta(days=365 * self.training_years_back)
-        training_span = dt.timedelta(days=60)
+        training_span = dt.timedelta(days=num_of_training_days)
         self.training_start_date = self.training_end_date - training_span
 
         self.current_element_idx = self.state_size
@@ -85,8 +83,12 @@ class ReinforcentModel():
         self.epsilon = 1.0
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.995
+        self.memory = None
 
     def getState(self, historical_stock_prices, current_element_idx):
+        if(self.memory==None):
+            self.memory = deque(maxlen=len(historical_stock_prices)*2)
+
         data_set_start = current_element_idx - (self.state_size+1) + 1
         data_set = historical_stock_prices[data_set_start:current_element_idx + 1]
         res = []
@@ -133,18 +135,21 @@ class ReinforcentModel():
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
 
+    def LoadPreTrainedModel(self, model_path):
+        self.model = load_model(model_path)
+
     def TrainAgent(self):
         self.is_eval = False
-        self.model = load_model(self.model_name) if self.is_eval else self._model()
+        self.model = self._model()
         # read stock historical prices from yahoo finance
         raw_data = web.DataReader(self.stock_ticker, 'yahoo', self.training_start_date, self.training_end_date)
         # use "High" price data COLUMN for training data
         self.historical_stock_prices = raw_data['High']
-        self.memory = deque(maxlen=len(self.historical_stock_prices)+1)
+        self.memory = deque(maxlen=len(self.historical_stock_prices)*2)
 
         max_data_index = len(self.historical_stock_prices) - 2
-        for episode in range(self.episode_count):
-            print("Episode " + str(episode) + "/" + str(self.episode_count))
+        for episode in range(1, self.num_of_training_episodes+1):
+            print("Episode " + str(episode) + "/" + str(self.num_of_training_episodes))
             state = self.getNextState()
             total_profit = 0
             self.inventory = []
@@ -172,10 +177,10 @@ class ReinforcentModel():
             self.model.save(self.model_name)
         self.is_eval = True
 
-company = "INTC"
-prediction_days = 7
-the_model = ReinforcentModel(company, state_size=prediction_days)
+company = "AAPL"
+the_model = ReinforcentModel(company, state_size=10, num_of_training_episodes=10, num_of_training_days=150)
 the_model.TrainAgent()
+#the_model.LoadPreTrainedModel("C:/MyProjects/AI/stock_prediction_ve/AAPL_model_07_01_2021__09_21_50_good2")
 
 
 ######################################################
@@ -183,7 +188,7 @@ the_model.TrainAgent()
 #Prepare test data
 #test_start = dt.datetime(the_year-1,1,1)
 test_end = dt.datetime.now()
-test_span = dt.timedelta(days=90)
+test_span = dt.timedelta(days=360)
 test_start = test_end - test_span
 
 test_data = web.DataReader(company, "yahoo", test_start, test_end)
@@ -197,13 +202,12 @@ test__buy_prices = []
 test__sell_prices = []
 test__profit = []
 test__total_profit = []
-test_data_set_len = prediction_days
 
 total_profit = 0
 max_data_index = len(actual_prices) - 2
 the_model.inventory = []
-state = the_model.getState(actual_prices, test_data_set_len)
-for i in range(test_data_set_len+1, max_data_index):
+state = the_model.getState(actual_prices, the_model.state_size)
+for i in range(the_model.state_size+1, max_data_index):
     next_state = the_model.getState(actual_prices, i+1)
     test__actual_prices.append(actual_prices[i])
     #predict
@@ -245,15 +249,27 @@ index_arr = np.array(index_arr)
 
 #plt.vlines(x=index_arr, ymin=0, ymax=test__actual_prices, color='firebrick', alpha=0.7, linewidth=2)
 plt.grid(which="both", axis="x")
-plt.scatter(x=index_arr, y=test__buy_prices, s=15, color='firebrick', alpha=0.7, label=f"Buy {company} price")
+plt.vlines(x=index_arr, ymin=np.amin(test__actual_prices)-1, ymax=np.amax(test__actual_prices)+1, color='gray', alpha=0.7, linewidth=1, linestyles='dashed')
 plt.plot(test__actual_prices, color="black", linestyle='solid', solid_joinstyle='round', linewidth=1, label=f"Actual {company} price")
-plt.scatter(x=index_arr, y=test__sell_prices, s=10, color='green', alpha=0.7,  label=f"Sell {company} price")
-#plt.plot(predicted_prices, color='green', linestyle='solid', label=f"Predicted {company} price")
-plt.vlines(x=index_arr, ymin=np.amin(test__actual_prices)-2, ymax=np.amax(test__actual_prices)+2, color='gray', alpha=0.7, linewidth=1, linestyles='dashed')
-plt.bar(x=index_arr, height=test__profit, color='blue', width=.5)
-plt.bar(x=index_arr, height=test__total_profit, color='green', width=.5)
+plt.scatter(x=index_arr, y=test__buy_prices, s=15, color='firebrick', alpha=0.7, label=f"Buy {company} price")
+plt.scatter(x=index_arr, y=test__sell_prices, s=15, color='green', alpha=0.7,  label=f"Sell {company} price")
 
 plt.title(f"{company} Share Price")
+plt.xlabel('Time')
+plt.ylabel(f"{company} Share Price")
+plt.legend()
+plt.show()
+
+#colors = ['green', 'blue']
+#vals = []
+#vals.append(test__profit)
+#vals.append(test__total_profit)
+#plt.hist(vals, bins = 2, histtype='bar', stacked=False, density=False, color=colors,  label=["Trade profit", "Total profit"])
+plt.bar(x=index_arr, height=test__profit, color='blue', width=0.5, label=f"Trade profit")
+plt.bar(x=index_arr, height=test__total_profit, color='green', width=0.5, label=f"Total profit")
+plt.grid(which="both", axis="both")
+
+plt.title(f"{company} Share Profit")
 plt.xlabel('Time')
 plt.ylabel(f"{company} Share Price")
 plt.legend()
