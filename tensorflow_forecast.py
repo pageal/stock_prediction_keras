@@ -143,9 +143,9 @@ training__input_prices = np.reshape(training__input_prices,
 history = None
 model = None
 
-#True - for loading the model
-#False - for training
-if(False):
+#False - for loading the model
+#True - for training
+if(True):
     model = Sequential()
 
     # LTSM neural network- https://en.wikipedia.org/wiki/Long_short-term_memory
